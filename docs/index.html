@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>MOOC Big Data | PVBM </title>
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <!-- Bootstrap 3.3.6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/css/bootstrap-datepicker.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Ionicons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/4.1.2/collection/icon/icon.css">
+
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+  <script src="/static/js/html5shiv.min.js"></script>
+  <script src="/static/js/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body class="hold-transition skin-blue sidebar-collapse sidebar-mini">
+<div class="wrapper">
+ 
+  
+<style>
+.cell-l, .cell-v, .cell-c { height:.25em; }
+.cell-l { width: 3em; }
+.cell-v { width: 2em; }
+.cell-c { width: .25em; }
+.cell-c-a { background: red; }
+</style>
+<!-- include the MathJax for this page only -->
+<script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<!-- Content Wrapper. Contains page content -->
+<div class="container">
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    课件视频观看量预测
+    <small>基于概率生成模型的课程的课件观看量预测</small>
+  </h1>
+</section>
+
+<!-- Main content -->
+<section class="content">
+<div class="row">
+  <div class="col-md-12">
+    <div class="box box-success">
+      <div class="box-header with-border">
+        <h3 class="box-title"><b>PVBM 预测模型</b> <small>Probabilistic Viewing Behavior Model</small></h3>
+        
+      </div>
+      <div class="box-body">
+        <p>PVBM是根据课件总量、学期天数、考试时间、学生数量、入学速率及日学习量这六个参数对学生的视频观看次数进行预测的模型。其核心在于通过计算每个学生在学期中每天观看视频的概率，模拟产生该课程整个学期各资源的访问状况。</p>
+        <p>该模型按如下公式计算学生 $i$ 在第 $t$ 天观看视频课件事件的概率 $p_i(t)$：</p>
+        <p>
+        $$
+        p_i(t) =
+        \begin{cases}
+          \frac{w_{i,t}}{C}\times(1-\frac{s_i}{D})\times\frac{t}{E}, & t\le E \\
+          \frac{w_{i,t}}{C}\times(1-\frac{s_i}{D})\times\frac{E}{t}, & t > E \\
+        \end{cases}
+        $$
+        </p>
+        <p>其中：<br/>
+        $w_{i,t}$ 为学生 $i$ 在第 $t$ 天的累积观看视频课件次数;<br/>
+        $s_i$ 表示学生 $i$ 开始学习日期距学期开始的天数;<br/>
+        $p_i(t)$ 表示学生 $i$ 在学期第 $t$ 天观看课件的概率;<br/>
+        $E$ 表示课程考试日期距学期开始的天数;<br/>
+        $C$ 表示课程视频课件总数量;<br/>
+        $D$ 表示课程学期总天数.
+        </p>
+        <p>基于 $p_i(t)$ 设计学习过程生成算法：</p>
+        <p>Step 1. 判断当前学生数量是否等于学生总数 $N$，如果是，则进入 Step 2；否则，加入 $u$ 名学生至学生列表 $L$，并对其初始化</p>
+        <p>Step 2. 计算已到课学生的 $p_i(t)$, 并按如下公式更新 $w_{i,t}$，其中 $\Delta w$ 为学生每次学习时观看视频课件次数</p>
+        <p>
+        $$
+        w_{i,t} =
+        \begin{cases}
+          w_{i,t-1} + \Delta w, & with \; p_i(t) \; probability \\
+          w_{i,t-1}, & with \; 1 - p_i(t) \; probability
+        \end{cases}
+        $$
+        </p>
+        <p>Step 3. 当 $t$ 等于 $D$ 时，算法结束，否则 $t=t+1$，转到Step 1</p>
+        <h3>计算指标</h3>
+        <p>根据上述模型，可以针对课程的课件，预估以下的关键指标以及具体细节:</p>
+        <p><b>最终预估总观看次数</b>: 在课程考试结束后，该课程的课件被观看的总次数(人次)</p>
+        <p><b>最终预估到课率统计</b>: 在课程考试结束后，所有学生访问课件的次数与应访问次数的比值，平均值和中位数</p>
+        <p><b>最终预估利用率统计</b>: 在课程考试结束后，所有课件被累积被访问次数与应访问次数的比值，平均值和中位数</p>
+        <p>以下计算过程使用 API <a href="/api/course_cvpredict">/api/course_cvpredict</a></p>
+      </div>
+    </div>
+  </div>
+</div><!-- /row of introduction of PVBM -->
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="box box-default">
+      <div class="box-header with-border">
+        <h3 class="box-title"><b>模型参数输入</b> <small>Parameters of PVBM model</small></h3>
+      </div>
+      <div class="box-body">
+        <div class="row">
+          <div class="col-xs-4">
+            <div class="input-group">
+              <span class="input-group-addon">课件总量 C</span>
+              <input type="text" disabled="disabled" name="pvbm_c" class="form-control" value="130" />
+            </div>
+          </div>
+          <div class="col-xs-4">
+            <div class="input-group">
+              <span class="input-group-addon">学期天数 D</span>
+              <input type="text" disabled="disabled" name="pvbm_d" class="form-control" value="117" />
+            </div>
+          </div>
+          <div class="col-xs-4">
+            <div class="input-group">
+              <span class="input-group-addon">考试时间 E</span>
+              <input type="text" disabled="disabled" name="pvbm_e" class="form-control" value="105" />
+            </div>
+          </div>
+          <hr/>
+        </div>
+        <div class="row">
+          <div class="col-xs-4">
+            <div class="input-group">
+              <span class="input-group-addon">预计人数 N</span>
+              <input type="text" disabled="disabled" name="pvbm_n" class="form-control" value="2960" />
+            </div>
+          </div>
+          <div class="col-xs-4">
+            <div class="input-group">
+              <span class="input-group-addon">入学速率 u</span>
+              <input type="text" disabled="disabled" name="pvbm_u" class="form-control" value="53" />
+            </div>
+          </div>
+          <div class="col-xs-4">
+            <div class="input-group">
+              <span class="input-group-addon">日学习量 dw</span>
+              <input type="text" disabled="disabled" name="pvbm_dw" class="form-control" value="4.23" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div><!-- /row of input form-->
+
+<div class="row" style="padding: 1em 0 1.5em 0; margin:1.5em 0 3em 0; border-bottom: 2px solid #999999;">
+    <div class="col-xs-12" style="text-align: center;">
+        <button type="submit" class="btn btn-info" style="width: 25%;" onclick="predict();">Predict</button>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4 col-sm-4 col-xs-4">
+    <div class="info-box">
+       <div class="info-box-content">
+         <span class="info-box-text"><b>最终预估总观看次数</b><br/>Final Estimated Total PV</span>
+         <span class="info-box-number" id="cvpredict_fetotalpv"> - </span>
+       </div><!-- /.info-box-content -->
+     </div><!-- /.info-box -->
+   </div>
+   <div class="col-md-4 col-sm-4 col-xs-4">
+     <div class="info-box">
+       <div class="info-box-content">
+         <span class="info-box-text"><b>最终预估到课率统计</b><br/>Final Enroll Stat.</span>
+         <span class="info-box-number" id="cvpredict_feenroll">-</span>
+       </div><!-- /.info-box-content -->
+     </div><!-- /.info-box -->
+   </div>
+   <div class="col-md-4 col-sm-4 col-xs-4">
+     <div class="info-box">
+       <div class="info-box-content">
+         <span class="info-box-text"><b>最终预估利用率统计</b><br/>Final Utility Stat.</span>
+         <span class="info-box-number" id="cvpredict_feutility">-</span>
+       </div><!-- /.info-box-content -->
+     </div><!-- /.info-box -->
+   </div>
+</div><!-- /row of total stat. vals -->
+
+<!-- Utilise Stat -->
+<div class="row">
+<div class="col-xs-12">
+  <!-- interactive chart -->
+  <div class="box box-primary">
+    <div class="box-header with-border">
+      
+      <h3 class="box-title">课件访问数量分布情况 / <small> Estimated CV Visited Distribution </small></h3>
+      <div class="box-tools pull-right">
+        <!--
+        指定时间:
+        <div class="btn-group" id="daterange_0">
+          <button type="button" class="btn btn-default btn-xs dateranger dr-s" id="date_start_0">2016-05-01</button>
+          <button type="button" class="btn btn-primary btn-xs" id="daterange_submit_0">查询</button>
+        </div>
+        -->
+      </div>
+    </div>
+    <div class="box-body">
+      <div id="chart_course_cvpredict_cvvhist" style="width:100%;height:500px;"></div>
+      <p>根据 PVBM 的模拟，可以产生学期内每个课件的总访问量，进而估算课件的利用情况，为调整课程设计提供参考。根据模拟结果，排在较前位置的课件被访问的次数较多，越往后则越少。而当总课件数量较少时，总体的访问情况会较好。造成这一现象的部分原因是课件的数量对于学习者的学习压力感受，过多的课件可能会使学习者有学习挫折感，进而导致较低的学习概率。课件视频总访问量分布（TV）：每个视频课件的累计被访问次数</p>
+      <p>
+      $$
+      TV = 
+      \{
+        \sum_{i=1}^{N}\sum_{t=1}^{D}s_{i,j,t} \;| \; j = 1...C, s\in \{0,\Delta w \}
+      \}
+      $$
+      </p>
+      <p>其中，$s_{i,j,t}$ 为第 $i$ 个学生第 $t$ 天对第 $j$ 个课件的访问次数</p>
+    </div><!-- /.box-body -->
+  </div>
+  <!-- /.box -->
+</div>
+<!-- /.col -->
+</div>
+<!-- /.row -->
+
+<div class="row">
+<div class="col-xs-12">
+  <!-- interactive chart -->
+  <div class="box box-primary">
+    <div class="box-header with-border">
+      
+      <h3 class="box-title">学生访问数量分布情况 / <small> Estimated Access Distribution </small></h3>
+      <div class="box-tools pull-right">
+        <!--
+        指定时间:
+        <div class="btn-group" id="daterange_0">
+          <button type="button" class="btn btn-default btn-xs dateranger dr-s" id="date_start_0">2016-05-01</button>
+          <button type="button" class="btn btn-primary btn-xs" id="daterange_submit_0">查询</button>
+        </div>
+        -->
+      </div>
+    </div>
+    <div class="box-body">
+      <div id="chart_course_cvpredict_stu2cv" style="width:100%;height:500px;"></div>
+      <p>根据 PVBM 的模拟，可以产生每个学生最终访问课件总数的分布情况，横轴是按照学生入学的时间顺序排列，纵轴代表课件访问的数量。可以看出随着学期的推进，入学较晚的学生最终观看课件的数量也相对较少，但也有部分学生可能在学期末集中观看。<b>学期末时各学生对课件的访问情况分布（SV）</b>：按入学日期升序排列的学生的累计课件访问次数分布</p>
+      <p>
+      $$
+      SV =
+      \{
+        \sum_{j=1}^{C}\sum_{t=1}^{D}s_{i,j,t} \;|\; i = 1...N
+      \}
+      $$
+      </p>
+      <p>其中，$s_{i,j,t}$ 为第 $i$ 个学生第 $t$ 天对第 $j$ 个课件的访问次数</p>
+    </div><!-- /.box-body -->
+  </div>
+  <!-- /.box -->
+</div>
+<!-- /.col -->
+</div>
+<!-- /.row -->
+
+<div class="row">
+<div class="col-xs-12">
+  <div class="box box-primary">
+    <div class="box-header with-border">
+      
+      <h3 class="box-title">累计访问数量历史 / 累计利用率 <small> Estimated PV/Utility History </small></h3>
+    </div><!-- /box-header -->
+    <div class="box-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div id="chart_course_cvpredict_pvhistory" style="width:100%;height:500px;"></div>
+          <p><b>课件的累计访问数量历史（VH）</b>：课程所有课件的累计被访问次数随时间的变化情况</p>
+          <p>
+          $$
+          VH =
+          \{
+            \sum_{j=1}^{C}\sum_{i=1}^{N}s_{i,j,t} \;|\; t = 1...D
+          \}
+          $$
+          </p>
+          <p>其中，$s_{i,j,t}$ 为第 $i$ 个学生第 $t$ 天对第 $j$ 个课件的访问次数</p>
+        </div><!-- /.col-md-6 -->
+        <div class="col-md-6">
+          <div id="chart_course_cvpredict_utilityhistory" style="width:100%;height:500px;"></div>
+          <p><b>课程整体利用率历史（URH）</b>：课程所有课件的整体利用率随时间的变化情况</p>
+          <p>
+          $$
+          URH =
+          \{
+            \frac{ \sum_{j=1}^{C}\sum_{i=1}^{N}s_{i,j,t} }{C \times N} \;|\; t = 1...D
+          \}
+          $$
+          </p>
+          <p>其中，$s_{i,j,t}$ 为第 $i$ 个学生第 $t$ 天对第 $j$ 个课件的访问次数</p>
+        </div><!-- /.col-md-6 -->
+      </div><!-- /row -->
+    </div><!-- /box-body -->
+  </div><!-- /box -->
+</div><!-- /col-xs-12 -->
+</div><!-- /row -->
+
+
+<div class="row">
+<div class="col-xs-12">
+  <div class="box box-primary">
+    <div class="box-header with-border">
+      
+      <h3 class="box-title">访问数量排行榜 / 访问概率分布 <small> Estimated Rank List / Estimated PDF </small></h3>
+    </div><!-- /box-header -->
+    <div class="box-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div id="chart_course_cvpredict_vvranklist" style="width:100%;height:500px;"></div>
+          <p><b>学生的视频总访问量排行榜（STV）</b>：学生累计视频观看次数分布，按照视频观看次数降序排列</p>
+          <p>
+          $$
+          STV =
+          \{
+            \sum_{j=1}^{C}\sum_{t=1}^{D}s_{i,j,t} \;|\; i = 1...N
+          \}_{sorted}
+          $$
+          </p>
+          <p>其中，$s_{i,j,t}$ 为第 $i$ 个学生第 $t$ 天对第 $j$ 个课件的访问次数</p>
+        </div><!-- /.col-md-6 -->
+        <div class="col-md-6">
+          <div id="chart_course_cvpredict_vvrankpdf" style="width:100%;height:500px;"></div>
+          <p><b>学生的视频总访问量概率分布 p(STV)</b>：对学生累积视频观看次数的概率分布进行统计</p>
+          <p>
+          $$
+          p(stv) =
+          Pr(\{
+            v \in V : X(v) = stv
+          \})
+          $$
+          </p>
+          <p>其中，v 代表每个学生样本，$stv$ 代表访问量，$p(stv)$ 代表了学生访问量为 $stv$ 的概率</p>
+        </div><!-- /.col-md-6 -->
+      </div><!-- /row -->
+    </div><!-- /box-body -->
+  </div><!-- /box -->
+</div><!-- /col-xs-12 -->
+</div><!-- /row of Rank list -->
+
+
+</section>
+<!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+  
+</div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED JS SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+<!-- Bootstrap 3.3.6 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/js/bootstrap-datepicker.min.js"></script>
+
+<!-- Baidu ECharts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/3.1.10/echarts.min.js"></script>
+<!-- Helpers -->
+
+<script>
+
+var tmp;
+// Functions for UI operations
+function predict() {
+    var c = $('input[name=pvbm_c]').val();
+    var d = $('input[name=pvbm_d]').val();
+    var e = $('input[name=pvbm_e]').val();
+    var n = $('input[name=pvbm_n]').val();
+    var u = $('input[name=pvbm_u]').val();
+    var dw = $('input[name=pvbm_dw]').val();
+
+    console.log("c=" + c);
+    console.log("d=" + d);
+    console.log("e=" + e);
+    console.log("n=" + n);
+    console.log("u=" + u);
+    console.log("dw=" + dw);
+    console.log("Predicting...");
+
+    $.get(
+        './static/data/sample-english2.json',
+        {},
+        function(data){
+            console.log('Got data!');
+            console.log(data);
+            tmp = data;
+            updateCharts(data);
+        },'json'
+    );
+}
+
+function updateCharts(data) {
+    console.log("Updating charts values...");
+    $('#cvpredict_fetotalpv').html(data.vv_total);
+    $('#cvpredict_feenroll').html(toFixedPercent(data.en_mean) + ' / ' + toFixedPercent(data.en_median));
+    $('#cvpredict_feutility').html(toFixedPercent(data.ut_mean) + ' / ' + toFixedPercent(data.ut_median));
+
+    var d;
+
+    // cvvhist / ut_pv 
+    var xdata = ['S0','S1','S2','S3','S4','S5','S6','S7'];
+    var ydata = [];
+    for (var i=0;i<=data.ut_pv.length/xdata.length;i++) {
+        ydata.push('C'+i);
+    }
+    d = {xdata:xdata, ydata:ydata, max:data.ut_pv[0]+100, vals:[]};
+    for (var i=0;i<data.ut_pv.length;i++) {
+        d.vals.push([i%xdata.length, parseInt(i/xdata.length), data.ut_pv[i]]);
+    }
+    chart_course_cvpredict_cvvhist.draw(d);
+
+    // stu2cv / vv_origin
+    var stus = [];
+    for (var i=0;i<data.vv_origin.length;i++) {
+        stus.push(i);
+    }
+    d = {vals:data.vv_origin, xaxis:stus};
+    chart_course_cvpredict_stu2cv.draw(d);
+
+    // pv_history / vv_perday
+    d = {vals:[]};
+    for (var i=0;i<data.vv_perday.length;i++) {
+        d.vals.push([i, data.vv_perday[i]]);
+    }
+    chart_course_cvpredict_pvhistory.draw(d);
+
+    // utilityhistory / vv_ratio_perday
+    d = {vals:[]}
+    for (var i=0;i<data.vv_ratio_perday.length;i++) {
+        d.vals.push([i, data.vv_ratio_perday[i]*100]);
+    }
+    chart_course_cvpredict_utilityhistory.draw(d);
+
+
+    // vvranklist / vv_ordered
+    d = {vals:[]}
+    for (var i=0;i<data.vv_ordered.length;i++) {
+        d.vals.push([i, data.vv_ordered[i]]);
+    }
+    chart_course_cvpredict_vvranklist.draw(d);
+
+    // vvrankpdf / vv_histed
+    d = {vals:[]}
+    for (var i=0;i<data.vv_histed[0].length;i++) {
+        d.vals.push([data.vv_histed[1][i], data.vv_histed[0][i]]);
+    }
+    chart_course_cvpredict_vvrankpdf.draw(d);
+}
+
+function presetValues(c, d, e, n, u, dw) {
+    console.log("Set values c,d,e,n,u,dw => ("+c+","+d+","+e+","+n+","+u+","+dw+")");
+    $('input[name=pvbm_c]').val(c);
+    $('input[name=pvbm_d]').val(d);
+    $('input[name=pvbm_e]').val(e);
+    $('input[name=pvbm_n]').val(n);
+    $('input[name=pvbm_u]').val(u);
+    $('input[name=pvbm_dw]').val(dw);
+}
+
+function toFixedPercent(f) {
+    return (f*100).toFixed(2) + '%';
+}
+</script>
+<script src="/static/js/chart/course_cvpredict_cvvhist.js"></script>
+<script src="/static/js/chart/course_cvpredict_stu2cv.js"></script>
+<script src="/static/js/chart/course_cvpredict_pvhistory.js"></script>
+<script src="/static/js/chart/course_cvpredict_utilityhistory.js"></script>
+<script src="/static/js/chart/course_cvpredict_vvranklist.js"></script>
+<script src="/static/js/chart/course_cvpredict_vvrankpdf.js"></script>
+<script>
+// Config for chart 0: sys_cid_day_tv
+//chart_sys_cid_day_tv.init('chart_sys_cid_day_0');
+//chart_sys_cid_day_tv.draw($('#date_start_0').html());
+//$('#daterange_submit_0').on('click', function(evt){
+//    chart_sys_cid_day_tv.draw($('#date_start_0').html());
+//});
+
+var data;
+
+// Draw the CVV histogram
+chart_course_cvpredict_cvvhist.init('chart_course_cvpredict_cvvhist');
+var rawdata = [];
+for (var i=2;i<74;i++) {
+    rawdata.push(parseInt(2000*(1/Math.log10(i)-0.49)));
+}
+var xdata = ['S0','S1','S2','S3','S4','S5','S6','S7'];
+var ydata = ['C0','C1','C2','C3','C4','C5','C6','C7','C8'];
+data = {xdata:xdata, ydata:ydata, max:2000, vals:[]};
+for (var i=0;i<72;i++) {
+    data.vals.push([i%8, parseInt(i/8), rawdata[i]]);
+}
+chart_course_cvpredict_cvvhist.draw(data);
+
+
+// Draw the stu2cv
+chart_course_cvpredict_stu2cv.init('chart_course_cvpredict_stu2cv');
+data = {vals:[], xaxis:[]};
+// Gen demo data
+for (var i=1;i<=1000;i++) {
+    data.vals.push(parseInt(Math.random()*72*(1-i/1000)));
+    data.xaxis.push(i);
+}
+chart_course_cvpredict_stu2cv.draw(data);
+
+
+// Draw the pv history
+chart_course_cvpredict_pvhistory.init('chart_course_cvpredict_pvhistory');
+data = {vals:[]};
+// Gen demo data
+var pv = 0;
+for (var i=1;i<=130;i++) {
+    pv = pv + parseInt(Math.random()*72*i);
+    data.vals.push([i, pv]);
+}
+chart_course_cvpredict_pvhistory.draw(data);
+
+// Draw the util history
+chart_course_cvpredict_utilityhistory.init('chart_course_cvpredict_utilityhistory');
+data = {vals:[]};
+var util = 0;
+for (var i=1;i<=130;i++) {
+    util += Math.random()*0.01;
+    data.vals.push([i, util]);
+}
+chart_course_cvpredict_utilityhistory.draw(data);
+
+// Draw the vv rank list
+chart_course_cvpredict_vvranklist.init('chart_course_cvpredict_vvranklist');
+// Gen demo data
+data = {vals:[]};
+for (var i=1;i<=1000;i++) {
+    data.vals.push([i, 300-parseInt(i*Math.random())]);
+}
+chart_course_cvpredict_vvranklist.draw(data);
+
+// Draw the vv rank pdf
+chart_course_cvpredict_vvrankpdf.init('chart_course_cvpredict_vvrankpdf');
+// Gen demo data
+data = {vals:[[1,600],[10,100],[20,10],[30,5],[40,2],[50,2],[60,1],[70,1],[80,1],[90,1],[100,2]]};
+chart_course_cvpredict_vvrankpdf.draw(data);
+
+</script>
+
+</body>
+</html>
